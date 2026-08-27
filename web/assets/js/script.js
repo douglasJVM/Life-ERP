@@ -173,6 +173,8 @@ function setupAuthPage() {
         };
     }
 
+    //
+    /*
     if (regForm) {
         regForm.onsubmit = async (e) => {
             e.preventDefault();
@@ -213,9 +215,11 @@ function setupAuthPage() {
                 showAuthAlert('Erro ao conectar ao servidor backend.');
             }
         };
-    }
+    }*/
 }
 
+
+//
 // ==========================================
 // 3. INICIALIZAÇÃO GERAL DO SISTEMA
 // ==========================================
