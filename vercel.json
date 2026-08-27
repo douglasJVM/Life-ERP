@@ -4,7 +4,7 @@
     "api/public/index.php": {
       "runtime": "vercel-php@0.7.1"
     },
-    "web/index.php": {
+    "api/web.php": {
       "runtime": "vercel-php@0.7.1"
     }
   },
@@ -27,11 +27,15 @@
     },
     {
       "src": "/views/(.*)",
-      "dest": "/web/index.php"
+      "dest": "/api/web.php"
     },
     {
       "src": "/",
-      "dest": "/web/index.php"
+      "dest": "/api/web.php"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/web.php"
     }
   ]
 }
