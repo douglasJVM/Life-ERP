@@ -11,32 +11,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// 1. Tratamento do Autoload do Composer
+// Autoload do Composer (se existir)
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoloadPath)) {
     require_once $autoloadPath;
 }
 
-// 2. Normalização da Rota
+// Normalização da URL
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-
-// Remove prefixos comuns da Vercel e da API
 $uri = preg_replace('#^/(api/public|api|public)#', '', $uri);
 $uri = trim($uri, '/');
 
-// Se a URI ficar vazia ou for 'auth', aponta para autenticação
 switch ($uri) {
     case 'auth':
-        // Inclua seu arquivo ou controller de autenticação aqui
-        // Exemplo:
-        if (file_exists(__DIR__ . '/../routes/auth.php')) {
-            require_once __DIR__ . '/../routes/auth.php';
-        } elseif (file_exists(__DIR__ . '/../controllers/AuthController.php')) {
-            require_once __DIR__ . '/../controllers/AuthController.php';
+        $controllerPath = __DIR__ . '/../src/Controllers/AuthController.php';
+
+        if (file_exists($controllerPath)) {
+            require_once $controllerPath;
+
+            // Instancia e executa caso AuthController use namespace ou classe direta
+            if (class_exists('App\\Controllers\\AuthController')) {
+                $controller = new \App\Controllers\AuthController();
+                $controller->handle(); // ou o método usado (ex: auth, register, login)
+            } elseif (class_exists('AuthController')) {
+                $controller = new AuthController();
+                $controller->handle();
+            }
         } else {
-            // Caso sua lógica de auth esteja em outro arquivo, ajuste o require:
             http_response_code(500);
-            echo json_encode(['status' => 'error', 'message' => 'Arquivo do AuthController não encontrado.']);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Arquivo api/src/Controllers/AuthController.php não encontrado.'
+            ]);
         }
         break;
 
