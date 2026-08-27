@@ -176,9 +176,18 @@ function setupAuthPage() {
     if (regForm) {
         regForm.onsubmit = async (e) => {
             e.preventDefault();
-            const nome = document.getElementById('reg-nome').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const senha = document.getElementById('reg-password').value;
+            const nomeInput = document.getElementById('reg-nome');
+            const emailInput = document.getElementById('reg-email');
+            const senhaInput = document.getElementById('reg-password') || document.getElementById('reg-senha');
+
+            const nome = nomeInput ? nomeInput.value.trim() : '';
+            const email = emailInput ? emailInput.value.trim() : '';
+            const senha = senhaInput ? senhaInput.value : '';
+
+            if (!nome || !email || !senha) {
+                 alert('Por favor, preencha todos os campos obrigatórios.');
+                 return;
+            }
 
             if (senha.length < 6) {
                 showAuthAlert('A senha deve ter no mínimo 6 caracteres.');

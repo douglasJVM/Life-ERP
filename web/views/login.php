@@ -15,7 +15,7 @@
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-[#06090e] text-slate-100 min-h-screen flex items-center justify-center p-4 antialiased selection:bg-indigo-500 selection:text-white">
@@ -106,7 +106,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="../assets/js/script.js"></script>
+    <script src="/assets/js/script.js"></script>
     <script>
         lucide.createIcons();
 
@@ -141,16 +141,19 @@
             const payload = { action };
 
             if (action === 'login') {
-                payload.email = document.getElementById('login-email').value.trim();
-                payload.senha = document.getElementById('login-password').value;
+                payload.email = (document.getElementById('login-email')?.value || '').trim();
+                payload.senha = document.getElementById('login-password')?.value || '';
             } else {
-                payload.nome = document.getElementById('reg-name').value.trim();
-                payload.email = document.getElementById('reg-email').value.trim();
-                payload.senha = document.getElementById('reg-password').value;
+                // Compatibilidade com reg-name ou reg-nome
+                const nameInput = document.getElementById('reg-name') || document.getElementById('reg-nome');
+                payload.nome = (nameInput?.value || '').trim();
+                payload.email = (document.getElementById('reg-email')?.value || '').trim();
+                payload.senha = document.getElementById('reg-password')?.value || '';
             }
 
             try {
-                const res = await fetch('http://localhost:8000/auth', {
+                // Rota relativa da API na Vercel
+                const res = await fetch('/api/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -159,19 +162,17 @@
                 const data = await res.json();
 
                 if (res.ok && data.status === 'success') {
-                    // Armazena dados do usuário no localStorage
                     localStorage.setItem('life_user_id', data.user.id);
                     localStorage.setItem('life_user_name', data.user.nome);
                     localStorage.setItem('life_user_email', data.user.email);
 
-                    // Redireciona para o Dashboard PWA
-                    window.location.href = 'dashboard.php';
+                    window.location.href = '/views/dashboard.php';
                 } else {
                     errorDiv.textContent = data.message || 'Falha na autenticação.';
                     errorDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                errorDiv.textContent = 'Servidor indisponível. Verifique se o backend está ativo na porta 8000.';
+                errorDiv.textContent = 'Erro de comunicação com a API.';
                 errorDiv.classList.remove('hidden');
             }
         }
