@@ -1,6 +1,7 @@
 {
+  "version": 2,
   "functions": {
-    "api/public/index.php": {
+    "public/index.php": {
       "runtime": "vercel-php@0.7.1"
     },
     "web/views/**/*.php": {
@@ -31,6 +32,10 @@
     {
       "src": "/",
       "dest": "/web/views/login.php"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/web/views/$1"
     }
   ]
 }
