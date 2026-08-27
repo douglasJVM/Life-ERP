@@ -22,6 +22,10 @@
       "dest": "/web/sw.js"
     },
     {
+      "src": "/styles.css",
+      "dest": "/web/assets/css/styles.css"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/web/assets/$1"
     },
