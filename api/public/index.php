@@ -28,21 +28,54 @@ $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $uri = preg_replace('#^/(api/public|api|public)#', '', $uri);
 $uri = trim($uri, '/');
 
+// api/public/index.php
 switch ($uri) {
     case 'auth':
         $controllerPath = __DIR__ . '/../src/Controllers/AuthController.php';
-
         if (file_exists($controllerPath)) {
             require_once $controllerPath;
-
             $controller = new \App\Controllers\AuthController();
             $controller->index();
-        } else {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'Arquivo api/src/Controllers/AuthController.php não encontrado.'
-            ]);
+        }
+        break;
+
+    case 'habits':
+    case 'habitos':
+    case 'stacker':
+        $controllerPath = __DIR__ . '/../src/Controllers/HabitController.php';
+        if (file_exists($controllerPath)) {
+            require_once $controllerPath;
+            $controller = new \App\Controllers\HabitController();
+            $controller->index();
+        }
+        break;
+
+    case 'finance':
+    case 'financeiro':
+        $controllerPath = __DIR__ . '/../src/Controllers/FinanceController.php';
+        if (file_exists($controllerPath)) {
+            require_once $controllerPath;
+            $controller = new \App\Controllers\FinanceController();
+            $controller->index();
+        }
+        break;
+
+    case 'fitness':
+        $controllerPath = __DIR__ . '/../src/Controllers/FitnessController.php';
+        if (file_exists($controllerPath)) {
+            require_once $controllerPath;
+            $controller = new \App\Controllers\FitnessController();
+            $controller->index();
+        }
+        break;
+
+    case 'study':
+    case 'estudos':
+        $controllerPath = __DIR__ . '/../src/Controllers/StudyController.php';
+        if (file_exists($controllerPath)) {
+            require_once $controllerPath;
+            $controller = new \App\Controllers\StudyController();
+            $controller->index();
         }
         break;
 
