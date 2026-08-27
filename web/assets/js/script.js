@@ -176,7 +176,7 @@ function setupAuthPage() {
     if (regForm) {
         regForm.onsubmit = async (e) => {
             e.preventDefault();
-            const nomeInput = document.getElementById('reg-nome');
+            const nomeInput = document.getElementById('reg-name') || document.getElementById('reg-nome');
             const emailInput = document.getElementById('reg-email');
             const senhaInput = document.getElementById('reg-password') || document.getElementById('reg-senha');
 
