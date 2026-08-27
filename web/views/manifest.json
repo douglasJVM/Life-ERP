@@ -1,0 +1,26 @@
+{
+  "name": "Life-ERP — Painel Vida",
+  "short_name": "Life-ERP",
+  "description": "Sistema de gestão pessoal, finanças e produtividade gamificada.",
+  "start_url": "/views/login.php",
+  "scope": "/",
+  "id": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#06090e",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

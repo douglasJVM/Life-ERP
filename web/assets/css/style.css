@@ -90,17 +90,16 @@ select option {
 /* Layout */
 .app-container {
     display: flex;
-    width: 100%;
     min-height: 100vh;
+    width: 100%;
 }
 
 .main-content {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 32px;
-    gap: 28px;
-    overflow-y: auto;
+    width: 100%;
+    min-width: 0; /* Previne overflow horizontal */
+    padding: 1.25rem;
+    padding-bottom: 5.5rem; /* Espaço para a barra inferior no mobile */
 }
 
 /* Sidebar */
@@ -221,4 +220,11 @@ select option {
 ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12);
     border-radius: 3px;
+}
+@media (min-width: 768px) {
+    .main-content {
+        margin-left: 16rem;
+        padding: 2rem;
+        padding-bottom: 2rem;
+    }
 }

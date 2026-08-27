@@ -1,5 +1,6 @@
-const API_BASE = 'http://localhost:8000';
-
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000' 
+    : '/api';
 // ==========================================
 // 1. SESSÃO & CONTROLE DE ACESSO
 // ==========================================
@@ -1065,4 +1066,15 @@ function formatBRL(value) {
         style: 'currency',
         currency: 'BRL'
     }).format(value || 0);
+}
+
+// ==========================================
+// REGISTRO DE PWA (SERVICE WORKER)
+// ==========================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registrado com sucesso!', reg.scope))
+            .catch(err => console.warn('Falha ao registrar Service Worker:', err));
+    });
 }
