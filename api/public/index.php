@@ -11,13 +11,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Autoload do Composer (se existir)
+// 1. Carrega o Autoload do Composer ou as classes manualmente
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoloadPath)) {
     require_once $autoloadPath;
+} else {
+    // Inclusão manual das dependências caso vendor/ não esteja na nuvem
+    $dbPath = __DIR__ . '/../src/Config/Database.php';
+    if (file_exists($dbPath)) {
+        require_once $dbPath;
+    }
 }
 
-// Normalização da URL
+// 2. Normaliza a rota
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $uri = preg_replace('#^/(api/public|api|public)#', '', $uri);
 $uri = trim($uri, '/');
@@ -29,14 +35,8 @@ switch ($uri) {
         if (file_exists($controllerPath)) {
             require_once $controllerPath;
 
-            // Instancia e executa caso AuthController use namespace ou classe direta
-            if (class_exists('App\\Controllers\\AuthController')) {
-                $controller = new \App\Controllers\AuthController();
-                $controller->handle(); // ou o método usado (ex: auth, register, login)
-            } elseif (class_exists('AuthController')) {
-                $controller = new AuthController();
-                $controller->handle();
-            }
+            $controller = new \App\Controllers\AuthController();
+            $controller->index();
         } else {
             http_response_code(500);
             echo json_encode([
