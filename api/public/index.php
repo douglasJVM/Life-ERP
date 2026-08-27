@@ -1,66 +1,51 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// api/public/index.php
 
-// Headers de CORS completos (incluindo X-User-Id)
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-User-Id");
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Trata pre-flight OPTIONS do navegador
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-require_once __DIR__ . '/../vendor/autoload.php';
+// 1. Tratamento do Autoload do Composer
+$autoloadPath = __DIR__ . '/../vendor/autoload.php';
+if (file_exists($autoloadPath)) {
+    require_once $autoloadPath;
+}
 
-use App\Controllers\AuthController;
-use App\Controllers\DashboardController;
-use App\Controllers\FinanceController;
-use App\Controllers\FitnessController;
-use App\Controllers\StudyController;
-use App\Controllers\HabitTrackerController;
-use App\Controllers\TaskController;
+// 2. Normalização da Rota
+$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
-try {
-    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+// Remove prefixos comuns da Vercel e da API
+$uri = preg_replace('#^/(api/public|api|public)#', '', $uri);
+$uri = trim($uri, '/');
 
-    switch ($uri) {
-        case '/auth':
-            (new AuthController())->index();
-            break;
-        case '/dashboard':
-            (new DashboardController())->index();
-            break;
-        case '/financas':
-            (new FinanceController())->index();
-            break;
-        case '/fitness':
-            (new FitnessController())->index();
-            break;
-        case '/estudos':
-            (new StudyController())->index();
-            break;
-        case '/habitos':
-            (new HabitTrackerController())->index();
-            break;
-        case '/tarefas':
-            (new TaskController())->index();
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(["status" => "error", "message" => "Rota não encontrada: " . $uri]);
-            break;
-    }
-} catch (\Throwable $e) {
-    http_response_code(500);
-    echo json_encode([
-        "status" => "error",
-        "message" => "Erro PHP: " . $e->getMessage(),
-        "file" => $e->getFile(),
-        "line" => $e->getLine()
-    ]);
+// Se a URI ficar vazia ou for 'auth', aponta para autenticação
+switch ($uri) {
+    case 'auth':
+        // Inclua seu arquivo ou controller de autenticação aqui
+        // Exemplo:
+        if (file_exists(__DIR__ . '/../routes/auth.php')) {
+            require_once __DIR__ . '/../routes/auth.php';
+        } elseif (file_exists(__DIR__ . '/../controllers/AuthController.php')) {
+            require_once __DIR__ . '/../controllers/AuthController.php';
+        } else {
+            // Caso sua lógica de auth esteja em outro arquivo, ajuste o require:
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Arquivo do AuthController não encontrado.']);
+        }
+        break;
+
+    default:
+        http_response_code(404);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Rota não encontrada: ' . ($_SERVER['REQUEST_URI'] ?? ''),
+            'normalized_uri' => $uri
+        ]);
+        break;
 }
