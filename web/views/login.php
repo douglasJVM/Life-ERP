@@ -135,8 +135,13 @@
 
         async function handleAuthSubmit(event, action) {
             event.preventDefault();
+            event.stopPropagation();
+
             const errorDiv = document.getElementById('auth-error-msg');
+            const submitBtn = action === 'login' ? document.getElementById('btn-submit-login') : document.getElementById('btn-submit-register');
+            
             errorDiv.classList.add('hidden');
+            errorDiv.className = 'mt-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl hidden text-center';
 
             const payload = { action };
 
@@ -144,16 +149,32 @@
                 payload.email = (document.getElementById('login-email')?.value || '').trim();
                 payload.senha = document.getElementById('login-password')?.value || '';
             } else {
-                // Compatibilidade com reg-name ou reg-nome
                 const nameInput = document.getElementById('reg-name') || document.getElementById('reg-nome');
                 payload.nome = (nameInput?.value || '').trim();
                 payload.email = (document.getElementById('reg-email')?.value || '').trim();
                 payload.senha = document.getElementById('reg-password')?.value || '';
             }
 
+            if (!payload.email || !payload.senha || (action === 'register' && !payload.nome)) {
+                errorDiv.textContent = 'Por favor, preencha todos os campos obrigatórios.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (action === 'register' && payload.senha.length < 6) {
+                errorDiv.textContent = 'A senha deve ter no mínimo 6 caracteres.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Carregando...';
+
+            const apiBase = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '/api';
+
             try {
-                // Rota relativa da API na Vercel
-                const res = await fetch('/api/auth', {
+                const res = await fetch(`${apiBase}/auth`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -161,19 +182,31 @@
 
                 const data = await res.json();
 
-                if (res.ok && data.status === 'success') {
-                    localStorage.setItem('life_user_id', data.user.id);
-                    localStorage.setItem('life_user_name', data.user.nome);
-                    localStorage.setItem('life_user_email', data.user.email);
+                if (res.ok && (data.status === 'success' || data.success)) {
+                    const user = data.user || data.data || {};
+                    localStorage.setItem('life_user_id', user.id || '');
+                    localStorage.setItem('life_user_name', user.nome || '');
+                    localStorage.setItem('life_user_email', user.email || '');
+                    localStorage.setItem('user_session', JSON.stringify(user));
 
-                    window.location.href = '/views/dashboard.php';
+                    errorDiv.className = 'mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl text-center';
+                    errorDiv.textContent = action === 'register' ? 'Conta criada! Redirecionando...' : 'Login realizado! Redirecionando...';
+                    errorDiv.classList.remove('hidden');
+
+                    setTimeout(() => {
+                        window.location.href = '/views/dashboard.php';
+                    }, 600);
                 } else {
-                    errorDiv.textContent = data.message || 'Falha na autenticação.';
+                    errorDiv.textContent = data.message || 'Falha ao processar requisição.';
                     errorDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                errorDiv.textContent = 'Erro de comunicação com a API.';
+                console.error(err);
+                errorDiv.textContent = 'Erro de comunicação com o servidor API.';
                 errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
         }
     </script>
