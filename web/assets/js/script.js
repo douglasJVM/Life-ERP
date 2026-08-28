@@ -291,18 +291,36 @@ function setupForms() {
 
             const { financas, fitness, estudos, feed } = result.dashboard;
 
-            if (financas) {
-                const saldoEl = document.getElementById('finance-balance');
-                if (saldoEl) {
-                    const saldo = parseFloat(financas.saldo_atual || 0);
-                    saldoEl.textContent = formatBRL(saldo);
-                    saldoEl.style.color = saldo >= 0 ? '#10b981' : '#f43f5e';
-                }
-                setText('dash-finance-flow', `Rec: ${formatBRL(financas.total_receitas)} | Desp: ${formatBRL(financas.total_despesas)}`);
+            // Dentro de loadDashboard() no script.js:
+if (financas) {
+            // Aceita tanto saldo_liquido quanto saldo_atual
+            const saldo = parseFloat(financas.saldo_liquido ?? financas.saldo_atual ?? 0);
+            const receitas = parseFloat(financas.total_receitas ?? 0);
+            const despesas = parseFloat(financas.total_despesas ?? 0);
 
-                const canvas = document.getElementById('expensesChart');
-                if (canvas && typeof Chart !== 'undefined') {
-                    renderDashboardChart(canvas, financas.despesas_categoria || []);
+            const formataMoeda = (val) => {
+                if (typeof formatBRL === 'function') return formatBRL(val);
+                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+            };
+
+    // Atualiza os elementos de saldo na tela
+            const saldoEl = document.getElementById('finance-balance') || 
+                            document.getElementById('dash-finance-balance') || 
+                            document.querySelector('[data-finance-balance]');
+
+            if (saldoEl) {
+                saldoEl.textContent = formataMoeda(saldo);
+                saldoEl.style.color = saldo >= 0 ? '#10b981' : '#f43f5e';
+            }
+
+            const fluxoEl = document.getElementById('dash-finance-flow');
+            if (fluxoEl) {
+                fluxoEl.textContent = `Rec: ${formataMoeda(receitas)} | Desp: ${formataMoeda(despesas)}`;
+            }
+
+            const canvas = document.getElementById('expensesChart');
+            if (canvas && typeof Chart !== 'undefined' && typeof renderDashboardChart === 'function') {
+                    renderDashboardChart(canvas, financas.categorias || financas.despesas_categoria || []);
                 }
             }
 
