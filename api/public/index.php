@@ -29,53 +29,59 @@ $uri = preg_replace('#^/(api/public|api|public)#', '', $uri);
 $uri = trim($uri, '/');
 
 // api/public/index.php
+// api/public/index.php
+
 switch ($uri) {
     case 'auth':
-        $controllerPath = __DIR__ . '/../src/Controllers/AuthController.php';
-        if (file_exists($controllerPath)) {
-            require_once $controllerPath;
-            $controller = new \App\Controllers\AuthController();
-            $controller->index();
+        $file = __DIR__ . '/../src/Controllers/AuthController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            (new \App\Controllers\AuthController())->index();
         }
         break;
 
+    // Hábitos e Tarefas
+    case 'tarefas':
     case 'habits':
     case 'habitos':
     case 'stacker':
-        $controllerPath = __DIR__ . '/../src/Controllers/HabitController.php';
-        if (file_exists($controllerPath)) {
-            require_once $controllerPath;
-            $controller = new \App\Controllers\HabitController();
-            $controller->index();
+        $file = __DIR__ . '/../src/Controllers/HabitController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            (new \App\Controllers\HabitController())->index();
+        } elseif (file_exists(__DIR__ . '/../src/Controllers/TaskController.php')) {
+            require_once __DIR__ . '/../src/Controllers/TaskController.php';
+            (new \App\Controllers\TaskController())->index();
         }
         break;
 
+    // Finanças
+    case 'financas':
     case 'finance':
     case 'financeiro':
-        $controllerPath = __DIR__ . '/../src/Controllers/FinanceController.php';
-        if (file_exists($controllerPath)) {
-            require_once $controllerPath;
-            $controller = new \App\Controllers\FinanceController();
-            $controller->index();
+        $file = __DIR__ . '/../src/Controllers/FinanceController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            (new \App\Controllers\FinanceController())->index();
         }
         break;
 
+    // Fitness
     case 'fitness':
-        $controllerPath = __DIR__ . '/../src/Controllers/FitnessController.php';
-        if (file_exists($controllerPath)) {
-            require_once $controllerPath;
-            $controller = new \App\Controllers\FitnessController();
-            $controller->index();
+        $file = __DIR__ . '/../src/Controllers/FitnessController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            (new \App\Controllers\FitnessController())->index();
         }
         break;
 
+    // Estudos
     case 'study':
     case 'estudos':
-        $controllerPath = __DIR__ . '/../src/Controllers/StudyController.php';
-        if (file_exists($controllerPath)) {
-            require_once $controllerPath;
-            $controller = new \App\Controllers\StudyController();
-            $controller->index();
+        $file = __DIR__ . '/../src/Controllers/StudyController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            (new \App\Controllers\StudyController())->index();
         }
         break;
 
