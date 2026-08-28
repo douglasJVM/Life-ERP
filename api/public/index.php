@@ -28,10 +28,34 @@ $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $uri = preg_replace('#^/(api/public|api|public)#', '', $uri);
 $uri = trim($uri, '/');
 
-// api/public/index.php
-// api/public/index.php
-
 switch ($uri) {
+    case 'dashboard':
+        $file = __DIR__ . '/../src/Controllers/DashboardController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            $controller = new \App\Controllers\DashboardController();
+            $controller->index();
+        } else {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'DashboardController não encontrado.']);
+        }
+        break;
+
+    case 'habitos':
+    case 'habits':
+    case 'tarefas':
+    case 'stacker':
+        $file = __DIR__ . '/../src/Controllers/HabitTrackerController.php';
+        if (file_exists($file)) {
+            require_once $file;
+            $controller = new \App\Controllers\HabitTrackerController();
+            $controller->index();
+        } else {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'HabitController não encontrado.']);
+        }
+        break;
+
     case 'auth':
         $file = __DIR__ . '/../src/Controllers/AuthController.php';
         if (file_exists($file)) {
@@ -40,25 +64,8 @@ switch ($uri) {
         }
         break;
 
-    // Hábitos e Tarefas
-    case 'tarefas':
-    case 'habits':
-    case 'habitos':
-    case 'stacker':
-        $file = __DIR__ . '/../src/Controllers/HabitController.php';
-        if (file_exists($file)) {
-            require_once $file;
-            (new \App\Controllers\HabitController())->index();
-        } elseif (file_exists(__DIR__ . '/../src/Controllers/TaskController.php')) {
-            require_once __DIR__ . '/../src/Controllers/TaskController.php';
-            (new \App\Controllers\TaskController())->index();
-        }
-        break;
-
-    // Finanças
     case 'financas':
     case 'finance':
-    case 'financeiro':
         $file = __DIR__ . '/../src/Controllers/FinanceController.php';
         if (file_exists($file)) {
             require_once $file;
@@ -66,7 +73,6 @@ switch ($uri) {
         }
         break;
 
-    // Fitness
     case 'fitness':
         $file = __DIR__ . '/../src/Controllers/FitnessController.php';
         if (file_exists($file)) {
@@ -75,7 +81,6 @@ switch ($uri) {
         }
         break;
 
-    // Estudos
     case 'study':
     case 'estudos':
         $file = __DIR__ . '/../src/Controllers/StudyController.php';
@@ -87,10 +92,6 @@ switch ($uri) {
 
     default:
         http_response_code(404);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Rota não encontrada: ' . ($_SERVER['REQUEST_URI'] ?? ''),
-            'normalized_uri' => $uri
-        ]);
+        echo json_encode(['status' => 'error', 'message' => 'Rota não encontrada: ' . $uri]);
         break;
 }
