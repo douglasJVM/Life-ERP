@@ -47,17 +47,17 @@
             <form id="form-login" onsubmit="handleAuthSubmit(event, 'login')" class="space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5">E-mail</label>
-                    <div class="relative">
-                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-                        <input type="email" id="login-email" required placeholder="seu@email.com" class="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+                    <div class="relative flex items-center">
+                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+                        <input type="email" id="login-email" required placeholder="seu@email.com" class="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5">Senha</label>
-                    <div class="relative">
-                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+                    <div class="relative flex items-center">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
                     </div>
                 </div>
 
@@ -70,25 +70,25 @@
             <form id="form-register" onsubmit="handleAuthSubmit(event, 'register')" class="space-y-4 hidden">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5">Nome Completo</label>
-                    <div class="relative">
-                        <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-                        <input type="text" id="reg-name" required placeholder="Seu Nome" class="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+                    <div class="relative flex items-center">
+                        <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+                        <input type="text" id="reg-name" required placeholder="Seu Nome" class="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5">E-mail</label>
-                    <div class="relative">
-                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-                        <input type="email" id="reg-email" required placeholder="seu@email.com" class="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+                    <div class="relative flex items-center">
+                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+                        <input type="email" id="reg-email" required placeholder="seu@email.com" class="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1.5">Senha</label>
-                    <div class="relative">
-                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3 text-slate-500"></i>
-                        <input type="password" id="reg-password" required placeholder="Mínimo 6 caracteres" class="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+                    <div class="relative flex items-center">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
+                        <input type="password" id="reg-password" required placeholder="Mínimo 6 caracteres" class="w-full bg-black/40 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
                     </div>
                 </div>
 
