@@ -9,17 +9,28 @@ class HabitTrackerController {
     public function index(): void {
         try {
             $db = (new Database())->getConnection();
-            $headers = getallheaders();
-            $userId = (int)($headers['X-User-Id'] ?? $headers['x-user-id'] ?? $_GET['user_id'] ?? 1);
+            $rawInput = file_get_contents('php://input');
+            $input = json_decode($rawInput, true) ?? [];
+
+            // Captura segura do ID do usuário
+            $userId = (int)(
+                $_SERVER['HTTP_X_USER_ID'] ?? 
+                $_GET['user_id'] ?? 
+                $input['user_id'] ?? 
+                (function_exists('getallheaders') ? (getallheaders()['X-User-Id'] ?? getallheaders()['x-user-id'] ?? null) : null) ?? 
+                1
+            );
+
             $method = $_SERVER['REQUEST_METHOD'];
             $today = date('Y-m-d');
 
+            // LISTAGEM DE HÁBITOS
             if ($method === 'GET') {
                 $sql = "
                     SELECT 
                         h.id, 
-                        h.titulo, 
-                        h.categoria, 
+                        h.nome AS titulo, 
+                        h.frequencia AS categoria, 
                         h.xp_recompensa,
                         CASE WHEN hl.id IS NOT NULL THEN 1 ELSE 0 END AS concluido_hoje,
                         COALESCE(stats.total, 0) AS total_conclusoes
@@ -30,7 +41,7 @@ class HabitTrackerController {
                         FROM habit_logs 
                         GROUP BY habit_id
                     ) stats ON h.id = stats.habit_id
-                    WHERE h.user_id = :uid
+                    WHERE h.user_id = :uid AND h.status = 'ativo'
                     ORDER BY h.id DESC
                 ";
 
@@ -45,22 +56,26 @@ class HabitTrackerController {
                 return;
             }
 
+            // CRIAÇÃO / TOGGLE / DELETE
             if ($method === 'POST') {
-                $input = json_decode(file_get_contents('php://input'), true) ?? [];
                 $action = $input['action'] ?? 'create';
 
                 if ($action === 'create') {
-                    $titulo = trim($input['titulo'] ?? '');
-                    $categoria = trim($input['categoria'] ?? 'Rotina');
+                    $nome = trim($input['titulo'] ?? $input['nome'] ?? '');
+                    $frequencia = trim($input['frequencia'] ?? $input['categoria'] ?? 'diario');
 
-                    if (empty($titulo)) {
+                    if (empty($nome)) {
                         http_response_code(400);
-                        echo json_encode(["status" => "error", "message" => "O título é obrigatório."]);
+                        echo json_encode(["status" => "error", "message" => "O título/nome do hábito é obrigatório."]);
                         return;
                     }
 
-                    $stmt = $db->prepare("INSERT INTO habits (user_id, titulo, categoria, xp_recompensa) VALUES (:u, :t, :c, 10)");
-                    $stmt->execute([':u' => $userId, ':t' => $titulo, ':c' => $categoria]);
+                    $stmt = $db->prepare("INSERT INTO habits (user_id, nome, frequencia, xp_recompensa, status) VALUES (:u, :n, :f, 10, 'ativo')");
+                    $stmt->execute([
+                        ':u' => $userId, 
+                        ':n' => $nome, 
+                        ':f' => ($frequencia === 'semanal' ? 'semanal' : 'diario')
+                    ]);
 
                     echo json_encode(["status" => "success", "message" => "Hábito criado com sucesso!"]);
                     return;
@@ -72,20 +87,18 @@ class HabitTrackerController {
                     $check->execute([':h' => $habitId, ':d' => $today]);
                     $log = $check->fetch(PDO::FETCH_ASSOC);
 
-                   $userModel = new \App\Models\User($db);
-
-if ($log) {
-    // Desmarcou -> remove 10 XP
-    $db->prepare("DELETE FROM habit_logs WHERE id = :id")->execute([':id' => $log['id']]);
-    $userModel->addXp($userId, -10);
-    echo json_encode(["status" => "success", "checked" => false]);
-} else {
-    // Marcou -> adiciona 10 XP
-    $db->prepare("INSERT INTO habit_logs (habit_id, user_id, data_conclusao) VALUES (:h, :u, :d)")
-       ->execute([':h' => $habitId, ':u' => $userId, ':d' => $today]);
-    $userModel->addXp($userId, 10);
-    echo json_encode(["status" => "success", "checked" => true]);
-}
+                    if ($log) {
+                        // Desmarcar -> Remove o log e subtrai 10 XP
+                        $db->prepare("DELETE FROM habit_logs WHERE id = :id")->execute([':id' => $log['id']]);
+                        $db->prepare("UPDATE users SET xp_total = GREATEST(0, xp_total - 10) WHERE id = :u")->execute([':u' => $userId]);
+                        echo json_encode(["status" => "success", "checked" => false]);
+                    } else {
+                        // Marcar -> Cria log e adiciona 10 XP
+                        $db->prepare("INSERT INTO habit_logs (habit_id, user_id, data_conclusao) VALUES (:h, :u, :d)")
+                           ->execute([':h' => $habitId, ':u' => $userId, ':d' => $today]);
+                        $db->prepare("UPDATE users SET xp_total = xp_total + 10 WHERE id = :u")->execute([':u' => $userId]);
+                        echo json_encode(["status" => "success", "checked" => true]);
+                    }
                     return;
                 }
 
