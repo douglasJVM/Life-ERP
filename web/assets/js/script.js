@@ -280,34 +280,32 @@ function setupForms() {
 // ==========================================
 // 4. MÓDULO: DASHBOARD
 // ==========================================
-    async function loadDashboard() {
-        const user = getActiveUser();
-        try {
-            const response = await fetch(`${API_BASE}/dashboard`, {
-                headers: user ? { 'X-User-Id': user.id } : {}
-            });
-            const result = await parseResponse(response);
-            if (!result || result.status !== 'success' || !result.dashboard) return;
+async function loadDashboard() {
+    const user = typeof getActiveUser === 'function' ? getActiveUser() : null;
+    const userId = user?.id || localStorage.getItem('life_user_id') || 1;
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-User-Id': String(userId)
+    };
 
-            const { financas, fitness, estudos, feed } = result.dashboard;
+    const formataMoeda = (val) => {
+        const num = parseFloat(val) || 0;
+        if (typeof formatBRL === 'function') return formatBRL(num);
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+    };
 
-            // Dentro de loadDashboard() no script.js:
-if (financas) {
-            // Aceita tanto saldo_liquido quanto saldo_atual
-            const saldo = parseFloat(financas.saldo_liquido ?? financas.saldo_atual ?? 0);
-            const receitas = parseFloat(financas.total_receitas ?? 0);
-            const despesas = parseFloat(financas.total_despesas ?? 0);
+    // 1. Carregar Finanças (usando o endpoint que já retorna os R$ 4.576,00)
+    try {
+        const resFin = await fetch(`${API_BASE}/financas?user_id=${userId}`, { headers });
+        const dataFin = await parseResponse(resFin);
 
-            const formataMoeda = (val) => {
-                if (typeof formatBRL === 'function') return formatBRL(val);
-                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-            };
+        if (dataFin && (dataFin.status === 'success' || dataFin.financas)) {
+            const fin = dataFin.financas || dataFin;
+            const saldo = parseFloat(fin.saldo_liquido ?? fin.saldo_atual ?? 0);
+            const receitas = parseFloat(fin.total_receitas ?? 0);
+            const despesas = parseFloat(fin.total_despesas ?? 0);
 
-    // Atualiza os elementos de saldo na tela
-            const saldoEl = document.getElementById('finance-balance') || 
-                            document.getElementById('dash-finance-balance') || 
-                            document.querySelector('[data-finance-balance]');
-
+            const saldoEl = document.getElementById('finance-balance') || document.getElementById('dash-finance-balance');
             if (saldoEl) {
                 saldoEl.textContent = formataMoeda(saldo);
                 saldoEl.style.color = saldo >= 0 ? '#10b981' : '#f43f5e';
@@ -320,23 +318,38 @@ if (financas) {
 
             const canvas = document.getElementById('expensesChart');
             if (canvas && typeof Chart !== 'undefined' && typeof renderDashboardChart === 'function') {
-                    renderDashboardChart(canvas, financas.categorias || financas.despesas_categoria || []);
-                }
+                renderDashboardChart(canvas, fin.categorias || fin.despesas_categoria || []);
             }
+        }
+    } catch (err) {
+        console.error('Erro ao carregar finanças no dashboard:', err);
+    }
+
+    // 2. Carregar Métricas Gerais do Dashboard (Fitness, Estudos, Feed)
+    try {
+        const resDash = await fetch(`${API_BASE}/dashboard?user_id=${userId}`, { headers });
+        const result = await parseResponse(resDash);
+
+        if (result && result.status === 'success' && result.dashboard) {
+            const { fitness, estudos, feed } = result.dashboard;
 
             if (fitness) {
-                setText('weekly-workouts-count', `${fitness.treinos_semana || 0} treinos`);
-                setText('dash-fitness-time', `${fitness.minutos_semana || 0} min em atividade`);
+                const treinosEl = document.getElementById('weekly-workouts-count');
+                const fitTimeEl = document.getElementById('dash-fitness-time');
+                if (treinosEl) treinosEl.textContent = `${fitness.treinos_semana || 0} treinos`;
+                if (fitTimeEl) fitTimeEl.textContent = `${fitness.minutos_semana || 0} min em atividade`;
             }
 
             if (estudos) {
-                setText('weekly-studies-hours', `${estudos.horas_semana || 0}h`);
-                setText('dash-studies-sessions', `${estudos.sessoes_semana || 0} blocos de estudo`);
+                const studyHoursEl = document.getElementById('weekly-studies-hours');
+                const studySessionsEl = document.getElementById('dash-studies-sessions');
+                if (studyHoursEl) studyHoursEl.textContent = `${estudos.horas_semana || 0}h`;
+                if (studySessionsEl) studySessionsEl.textContent = `${estudos.sessoes_semana || 0} blocos de estudo`;
             }
 
             const feedContainer = document.getElementById('dash-recent-feed');
-            if (feedContainer) {
-                if (!feed || feed.length === 0) {
+            if (feedContainer && Array.isArray(feed)) {
+                if (feed.length === 0) {
                     feedContainer.innerHTML = `<div class="py-4 text-center text-xs text-slate-500">Nenhuma atividade registrada recentemente.</div>`;
                 } else {
                     feedContainer.innerHTML = feed.map(item => `
@@ -358,12 +371,13 @@ if (financas) {
                     `).join('');
                 }
             }
-
-            if (window.lucide) lucide.createIcons();
-        } catch (error) {
-            console.error('Erro ao carregar Dashboard:', error);
         }
+    } catch (err) {
+        console.error('Erro ao carregar métricas adicionais do dashboard:', err);
     }
+
+    if (window.lucide) lucide.createIcons();
+}
 
 function renderDashboardChart(canvas, categorias) {
     const ctx = canvas.getContext('2d');
