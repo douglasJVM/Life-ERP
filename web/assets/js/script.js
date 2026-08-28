@@ -280,72 +280,72 @@ function setupForms() {
 // ==========================================
 // 4. MÓDULO: DASHBOARD
 // ==========================================
-async function loadDashboard() {
-    const user = getActiveUser();
-    try {
-        const response = await fetch(`${API_BASE}/dashboard`, {
-            headers: user ? { 'X-User-Id': user.id } : {}
-        });
-        const result = await parseResponse(response);
-        if (!result || result.status !== 'success' || !result.dashboard) return;
+    async function loadDashboard() {
+        const user = getActiveUser();
+        try {
+            const response = await fetch(`${API_BASE}/dashboard`, {
+                headers: user ? { 'X-User-Id': user.id } : {}
+            });
+            const result = await parseResponse(response);
+            if (!result || result.status !== 'success' || !result.dashboard) return;
 
-        const { financas, fitness, estudos, feed } = result.dashboard;
+            const { financas, fitness, estudos, feed } = result.dashboard;
 
-        if (financas) {
-            const saldoEl = document.getElementById('finance-balance');
-            if (saldoEl) {
-                const saldo = parseFloat(financas.saldo_atual || 0);
-                saldoEl.textContent = formatBRL(saldo);
-                saldoEl.style.color = saldo >= 0 ? '#10b981' : '#f43f5e';
+            if (financas) {
+                const saldoEl = document.getElementById('finance-balance');
+                if (saldoEl) {
+                    const saldo = parseFloat(financas.saldo_atual || 0);
+                    saldoEl.textContent = formatBRL(saldo);
+                    saldoEl.style.color = saldo >= 0 ? '#10b981' : '#f43f5e';
+                }
+                setText('dash-finance-flow', `Rec: ${formatBRL(financas.total_receitas)} | Desp: ${formatBRL(financas.total_despesas)}`);
+
+                const canvas = document.getElementById('expensesChart');
+                if (canvas && typeof Chart !== 'undefined') {
+                    renderDashboardChart(canvas, financas.despesas_categoria || []);
+                }
             }
-            setText('dash-finance-flow', `Rec: ${formatBRL(financas.total_receitas)} | Desp: ${formatBRL(financas.total_despesas)}`);
 
-            const canvas = document.getElementById('expensesChart');
-            if (canvas && typeof Chart !== 'undefined') {
-                renderDashboardChart(canvas, financas.despesas_categoria || []);
+            if (fitness) {
+                setText('weekly-workouts-count', `${fitness.treinos_semana || 0} treinos`);
+                setText('dash-fitness-time', `${fitness.minutos_semana || 0} min em atividade`);
             }
-        }
 
-        if (fitness) {
-            setText('weekly-workouts-count', `${fitness.treinos_semana || 0} treinos`);
-            setText('dash-fitness-time', `${fitness.minutos_semana || 0} min em atividade`);
-        }
+            if (estudos) {
+                setText('weekly-studies-hours', `${estudos.horas_semana || 0}h`);
+                setText('dash-studies-sessions', `${estudos.sessoes_semana || 0} blocos de estudo`);
+            }
 
-        if (estudos) {
-            setText('weekly-studies-hours', `${estudos.horas_semana || 0}h`);
-            setText('dash-studies-sessions', `${estudos.sessoes_semana || 0} blocos de estudo`);
-        }
-
-        const feedContainer = document.getElementById('dash-recent-feed');
-        if (feedContainer) {
-            if (!feed || feed.length === 0) {
-                feedContainer.innerHTML = `<div class="py-4 text-center text-xs text-slate-500">Nenhuma atividade registrada recentemente.</div>`;
-            } else {
-                feedContainer.innerHTML = feed.map(item => `
-                    <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between hover:bg-white/[0.04] transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2.5 h-2.5 rounded-full ${
-                                item.color === 'emerald' ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' :
-                                item.color === 'rose' ? 'bg-rose-400 shadow-sm shadow-rose-400/50' :
-                                item.color === 'cyan' ? 'bg-cyan-400 shadow-sm shadow-cyan-400/50' :
-                                'bg-purple-400 shadow-sm shadow-purple-400/50'
-                            }"></div>
-                            <div>
-                                <p class="text-sm font-semibold text-slate-200">${item.titulo}</p>
-                                <p class="text-xs text-slate-400">${item.subtitulo} • <span class="text-slate-500">${item.data}</span></p>
+            const feedContainer = document.getElementById('dash-recent-feed');
+            if (feedContainer) {
+                if (!feed || feed.length === 0) {
+                    feedContainer.innerHTML = `<div class="py-4 text-center text-xs text-slate-500">Nenhuma atividade registrada recentemente.</div>`;
+                } else {
+                    feedContainer.innerHTML = feed.map(item => `
+                        <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between hover:bg-white/[0.04] transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2.5 h-2.5 rounded-full ${
+                                    item.color === 'emerald' ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' :
+                                    item.color === 'rose' ? 'bg-rose-400 shadow-sm shadow-rose-400/50' :
+                                    item.color === 'cyan' ? 'bg-cyan-400 shadow-sm shadow-cyan-400/50' :
+                                    'bg-purple-400 shadow-sm shadow-purple-400/50'
+                                }"></div>
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-200">${item.titulo}</p>
+                                    <p class="text-xs text-slate-400">${item.subtitulo} • <span class="text-slate-500">${item.data}</span></p>
+                                </div>
                             </div>
+                            <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white/5 border border-white/10 text-slate-300">${item.badge}</span>
                         </div>
-                        <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white/5 border border-white/10 text-slate-300">${item.badge}</span>
-                    </div>
-                `).join('');
+                    `).join('');
+                }
             }
-        }
 
-        if (window.lucide) lucide.createIcons();
-    } catch (error) {
-        console.error('Erro ao carregar Dashboard:', error);
+            if (window.lucide) lucide.createIcons();
+        } catch (error) {
+            console.error('Erro ao carregar Dashboard:', error);
+        }
     }
-}
 
 function renderDashboardChart(canvas, categorias) {
     const ctx = canvas.getContext('2d');
