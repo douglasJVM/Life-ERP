@@ -12,7 +12,6 @@ class HabitTrackerController {
             $rawInput = file_get_contents('php://input');
             $input = json_decode($rawInput, true) ?? [];
 
-            // Captura segura do ID do usuário
             $userId = (int)(
                 $_SERVER['HTTP_X_USER_ID'] ?? 
                 $_GET['user_id'] ?? 
@@ -24,14 +23,26 @@ class HabitTrackerController {
             $method = $_SERVER['REQUEST_METHOD'];
             $today = date('Y-m-d');
 
+            // Detecta dinamicamente quais colunas existem na tabela habits
+            $stmtCols = $db->query("SHOW COLUMNS FROM habits");
+            $columns = $stmtCols->fetchAll(PDO::FETCH_COLUMN);
+
+            $titleField = in_array('titulo', $columns) ? 'titulo' : 'nome';
+            $categoryField = in_array('categoria', $columns) ? 'categoria' : (in_array('frequencia', $columns) ? 'frequencia' : "'Rotina'");
+            $hasReward = in_array('xp_recompensa', $columns);
+            $hasStatus = in_array('status', $columns);
+
             // LISTAGEM DE HÁBITOS
             if ($method === 'GET') {
+                $rewardSelect = $hasReward ? "h.xp_recompensa," : "10 AS xp_recompensa,";
+                $statusWhere = $hasStatus ? "AND (h.status = 'ativo' OR h.status IS NULL)" : "";
+
                 $sql = "
                     SELECT 
                         h.id, 
-                        h.nome AS titulo, 
-                        h.frequencia AS categoria, 
-                        h.xp_recompensa,
+                        h.{$titleField} AS titulo, 
+                        h.{$categoryField} AS categoria, 
+                        {$rewardSelect}
                         CASE WHEN hl.id IS NOT NULL THEN 1 ELSE 0 END AS concluido_hoje,
                         COALESCE(stats.total, 0) AS total_conclusoes
                     FROM habits h
@@ -41,7 +52,7 @@ class HabitTrackerController {
                         FROM habit_logs 
                         GROUP BY habit_id
                     ) stats ON h.id = stats.habit_id
-                    WHERE h.user_id = :uid AND h.status = 'ativo'
+                    WHERE h.user_id = :uid {$statusWhere}
                     ORDER BY h.id DESC
                 ";
 
@@ -61,21 +72,38 @@ class HabitTrackerController {
                 $action = $input['action'] ?? 'create';
 
                 if ($action === 'create') {
-                    $nome = trim($input['titulo'] ?? $input['nome'] ?? '');
-                    $frequencia = trim($input['frequencia'] ?? $input['categoria'] ?? 'diario');
+                    $tituloVal = trim($input['titulo'] ?? $input['nome'] ?? '');
+                    $categoriaVal = trim($input['categoria'] ?? $input['frequencia'] ?? 'Rotina');
 
-                    if (empty($nome)) {
+                    if (empty($tituloVal)) {
                         http_response_code(400);
-                        echo json_encode(["status" => "error", "message" => "O título/nome do hábito é obrigatório."]);
+                        echo json_encode(["status" => "error", "message" => "O título do hábito é obrigatório."]);
                         return;
                     }
 
-                    $stmt = $db->prepare("INSERT INTO habits (user_id, nome, frequencia, xp_recompensa, status) VALUES (:u, :n, :f, 10, 'ativo')");
-                    $stmt->execute([
-                        ':u' => $userId, 
-                        ':n' => $nome, 
-                        ':f' => ($frequencia === 'semanal' ? 'semanal' : 'diario')
-                    ]);
+                    $insertCols = ['user_id', $titleField];
+                    $insertVals = [':u', ':t'];
+                    $params = [':u' => $userId, ':t' => $tituloVal];
+
+                    if ($categoryField !== "'Rotina'") {
+                        $insertCols[] = $categoryField;
+                        $insertVals[] = ':c';
+                        $params[':c'] = ($categoryField === 'frequencia' && $categoriaVal === 'semanal') ? 'semanal' : ($categoryField === 'frequencia' ? 'diario' : $categoriaVal);
+                    }
+
+                    if ($hasReward) {
+                        $insertCols[] = 'xp_recompensa';
+                        $insertVals[] = '10';
+                    }
+
+                    if ($hasStatus) {
+                        $insertCols[] = 'status';
+                        $insertVals[] = "'ativo'";
+                    }
+
+                    $sqlInsert = "INSERT INTO habits (" . implode(', ', $insertCols) . ") VALUES (" . implode(', ', $insertVals) . ")";
+                    $stmt = $db->prepare($sqlInsert);
+                    $stmt->execute($params);
 
                     echo json_encode(["status" => "success", "message" => "Hábito criado com sucesso!"]);
                     return;
@@ -88,12 +116,10 @@ class HabitTrackerController {
                     $log = $check->fetch(PDO::FETCH_ASSOC);
 
                     if ($log) {
-                        // Desmarcar -> Remove o log e subtrai 10 XP
                         $db->prepare("DELETE FROM habit_logs WHERE id = :id")->execute([':id' => $log['id']]);
                         $db->prepare("UPDATE users SET xp_total = GREATEST(0, xp_total - 10) WHERE id = :u")->execute([':u' => $userId]);
                         echo json_encode(["status" => "success", "checked" => false]);
                     } else {
-                        // Marcar -> Cria log e adiciona 10 XP
                         $db->prepare("INSERT INTO habit_logs (habit_id, user_id, data_conclusao) VALUES (:h, :u, :d)")
                            ->execute([':h' => $habitId, ':u' => $userId, ':d' => $today]);
                         $db->prepare("UPDATE users SET xp_total = xp_total + 10 WHERE id = :u")->execute([':u' => $userId]);
